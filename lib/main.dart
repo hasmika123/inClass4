@@ -21,8 +21,16 @@ class ShapesDemoApp extends StatelessWidget {
   }
 }
 
-class ShapesDemoScreen extends StatelessWidget {
+class ShapesDemoScreen extends StatefulWidget {
   const ShapesDemoScreen({super.key});
+
+  @override
+  State<ShapesDemoScreen> createState() => _ShapesDemoScreenState();
+}
+
+class _ShapesDemoScreenState extends State<ShapesDemoScreen> {
+  String _selectedEmoji = 'Party Face';
+  final List<String> _emojiOptions = ['Party Face', 'Heart'];
 
   @override
   Widget build(BuildContext context) {
@@ -73,10 +81,121 @@ class ShapesDemoScreen extends StatelessWidget {
                 size: const Size(double.infinity, 300),
               ),
             ),
+            const SizedBox(height: 20),
+            const Text(
+              'Part 1: Emoji Drawing',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Text('Select Emoji: '),
+                DropdownButton<String>(
+                  value: _selectedEmoji,
+                  items: _emojiOptions
+                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedEmoji = value;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 300,
+              child: CustomPaint(
+                painter: EmojiPainter(_selectedEmoji),
+                size: const Size(double.infinity, 300),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+}
+// CustomPainter for drawing Party Face and Heart emojis
+class EmojiPainter extends CustomPainter {
+  final String emojiType;
+  EmojiPainter(this.emojiType);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (emojiType == 'Party Face') {
+      _drawPartyFace(canvas, size);
+    } else {
+      _drawHeart(canvas, size);
+    }
+  }
+
+  void _drawPartyFace(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    // Face
+    final facePaint = Paint()..color = Colors.yellow;
+    canvas.drawCircle(center, 80, facePaint);
+    // Eyes
+    final eyePaint = Paint()..color = Colors.black;
+    canvas.drawCircle(center.translate(-30, -20), 10, eyePaint);
+    canvas.drawCircle(center.translate(30, -20), 10, eyePaint);
+    // Smile
+    final smilePaint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5;
+    final smileRect = Rect.fromCenter(center: center.translate(0, 20), width: 50, height: 30);
+    canvas.drawArc(smileRect, 0, pi, false, smilePaint);
+    // Party hat
+    final hatPath = Path()
+      ..moveTo(center.dx, center.dy - 80)
+      ..lineTo(center.dx - 30, center.dy - 120)
+      ..lineTo(center.dx + 30, center.dy - 120)
+      ..close();
+    final hatPaint = Paint()..color = Colors.purple;
+    canvas.drawPath(hatPath, hatPaint);
+    // Hat band
+    final bandPaint = Paint()..color = Colors.blue;
+    canvas.drawRect(Rect.fromLTWH(center.dx - 15, center.dy - 90, 30, 8), bandPaint);
+    // Confetti
+    final confettiColors = [Colors.red, Colors.green, Colors.blue, Colors.orange, Colors.pink];
+    final rand = Random(42);
+    for (int i = 0; i < 15; i++) {
+      final angle = rand.nextDouble() * 2 * pi;
+      final radius = 100 + rand.nextDouble() * 30;
+      final confettiOffset = Offset(
+        center.dx + cos(angle) * radius,
+        center.dy + sin(angle) * radius,
+      );
+      final confettiPaint = Paint()..color = confettiColors[i % confettiColors.length];
+      canvas.drawCircle(confettiOffset, 6, confettiPaint);
+    }
+  }
+
+  void _drawHeart(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2 + 20);
+    final heartPaint = Paint()..color = Colors.red;
+    final path = Path();
+    path.moveTo(center.dx, center.dy);
+    path.cubicTo(
+      center.dx + 60, center.dy - 80,
+      center.dx + 120, center.dy + 40,
+      center.dx, center.dy + 100,
+    );
+    path.cubicTo(
+      center.dx - 120, center.dy + 40,
+      center.dx - 60, center.dy - 80,
+      center.dx, center.dy,
+    );
+    canvas.drawPath(path, heartPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant EmojiPainter oldDelegate) {
+    return oldDelegate.emojiType != emojiType;
   }
 }
 
